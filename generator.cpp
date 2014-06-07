@@ -23,10 +23,10 @@ bool validBoard(vector<vector<char> > board) {
     for(int j=0; j<size; j++) {
       if(board[i][j] == '1')
         one++;
-      else
+      else if(board[i][j] == '0')
         zero++;
     }
-    if(one != zero)
+    if(one > size/2 ||  zero > size/2)
       return false;
     
     one = 0;
@@ -37,10 +37,10 @@ bool validBoard(vector<vector<char> > board) {
     for(int j=0; j<size; j++) {
       if(board[j][i] == '1')
         one++;
-      else
+      else if(board[j][i] == '0')
         zero++;
     }
-    if(one != zero)
+    if(one > size/2 ||  zero > size/2)
       return false;
     
     one = 0;
@@ -51,7 +51,7 @@ bool validBoard(vector<vector<char> > board) {
     for(int j=i+1; j<size; j++) {
       bool same = true;
       for(int k=0; k<size; k++) {
-        if(board[i][k] != board[j][k]) {
+        if(board[i][k] != board[j][k] || board[j][k]=='/') {
           same = false;
           break;
         }
@@ -65,7 +65,7 @@ bool validBoard(vector<vector<char> > board) {
     for(int j=i+1; j<size; j++) {
       bool same = true;
       for(int k=0; k<size; k++) {
-        if(board[k][i] != board[k][j]) {
+        if(board[k][i] != board[k][j] || board[k][j]=='/') {
           same = false;
           break;
         }
@@ -87,7 +87,7 @@ int main(void) {
   
   for(int i=0; i<board.size(); i++)
     for(int j=0; j<board[i].size(); j++)
-      board[i][j] = rand()%2+48;
+      board[i][j] = rand()%3+47;
   
   printBoard(board);
 
