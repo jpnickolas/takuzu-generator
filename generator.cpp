@@ -7,6 +7,7 @@
 
 using namespace std;
 
+//Prints out the board separated by spaces
 void printBoard(vector<vector<char> > board) {
   for(int i=0; i<board.size(); i++) {
     for(int j=0; j<board[i].size(); j++)
@@ -15,10 +16,12 @@ void printBoard(vector<vector<char> > board) {
   }
 }
 
+//Returns true if the board is a valid board, and false otherwise 
 bool validBoard(vector<vector<char> > board) {
 
   int zero=0, one=0, size=board.size();
 
+  //checks the rows for too many 1's or 0's
   for(int i=0; i<size; i++) {
     for(int j=0; j<size; j++) {
       if(board[i][j] == '1')
@@ -33,6 +36,7 @@ bool validBoard(vector<vector<char> > board) {
     zero = 0;
   }
 
+  //checks the columns for too many 1's or 0's
   for(int i=0; i<size; i++) {
     for(int j=0; j<size; j++) {
       if(board[j][i] == '1')
@@ -47,6 +51,7 @@ bool validBoard(vector<vector<char> > board) {
     zero = 0;
   }
   
+  //checks the rows for duplicates
   for(int i=0; i<size; i++) {
     for(int j=i+1; j<size; j++) {
       bool same = true;
@@ -61,6 +66,7 @@ bool validBoard(vector<vector<char> > board) {
     }
   }
 
+  //checks the columns for duplicates
   for(int i=0; i<size; i++) {
     for(int j=i+1; j<size; j++) {
       bool same = true;
@@ -79,18 +85,21 @@ bool validBoard(vector<vector<char> > board) {
 }
 
 int main(void) {
+
+  //creates the board of the correct size
   vector<vector<char> > board;
-  
   board.resize(SIZE, vector<char>(SIZE, '/'));
 
+  //randomly fills the board
   srand(time(NULL));
-  
   for(int i=0; i<board.size(); i++)
     for(int j=0; j<board[i].size(); j++)
       board[i][j] = rand()%3+47;
   
+  //prints out the board
   printBoard(board);
 
+  //validates the board
   if(validBoard(board)) {
     cout<<"Valid"<<endl;
   }
