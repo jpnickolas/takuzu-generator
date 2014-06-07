@@ -1,4 +1,5 @@
 #include<iostream>
+#include<vector>
 #include<stdlib.h>
 #include<time.h>
 
@@ -6,20 +7,20 @@
 
 using namespace std;
 
-void printBoard(char board[][SIZE]) {
-  for(int i=0; i<SIZE; i++) {
-    for(int j=0; j<SIZE; j++)
+void printBoard(vector<vector<char> > board) {
+  for(int i=0; i<board.size(); i++) {
+    for(int j=0; j<board[i].size(); j++)
       cout<<board[i][j]<<' ';
     cout<<endl;
   }
 }
 
-bool validBoard(char board[][SIZE]) {
+bool validBoard(vector<vector<char> > board) {
 
-  int zero=0, one=0;
+  int zero=0, one=0, size=board.size();
 
-  for(int i=0; i<SIZE; i++) {
-    for(int j=0; j<SIZE; j++) {
+  for(int i=0; i<size; i++) {
+    for(int j=0; j<size; j++) {
       if(board[i][j] == '1')
         one++;
       else
@@ -32,8 +33,8 @@ bool validBoard(char board[][SIZE]) {
     zero = 0;
   }
 
-  for(int i=0; i<SIZE; i++) {
-    for(int j=0; j<SIZE; j++) {
+  for(int i=0; i<size; i++) {
+    for(int j=0; j<size; j++) {
       if(board[j][i] == '1')
         one++;
       else
@@ -46,10 +47,10 @@ bool validBoard(char board[][SIZE]) {
     zero = 0;
   }
   
-  for(int i=0; i<SIZE; i++) {
-    for(int j=i+1; j<SIZE; j++) {
-      bool same = true;;
-      for(int k=0; k<SIZE; k++) {
+  for(int i=0; i<size; i++) {
+    for(int j=i+1; j<size; j++) {
+      bool same = true;
+      for(int k=0; k<size; k++) {
         if(board[i][k] != board[j][k]) {
           same = false;
           break;
@@ -60,10 +61,10 @@ bool validBoard(char board[][SIZE]) {
     }
   }
 
-  for(int i=0; i<SIZE; i++) {
-    for(int j=i+1; j<SIZE; j++) {
-      bool same = true;;
-      for(int k=0; k<SIZE; k++) {
+  for(int i=0; i<size; i++) {
+    for(int j=i+1; j<size; j++) {
+      bool same = true;
+      for(int k=0; k<size; k++) {
         if(board[k][i] != board[k][j]) {
           same = false;
           break;
@@ -78,12 +79,14 @@ bool validBoard(char board[][SIZE]) {
 }
 
 int main(void) {
-  char board[SIZE][SIZE];
+  vector<vector<char> > board;
+  
+  board.resize(SIZE, vector<char>(SIZE, '/'));
 
   srand(time(NULL));
   
-  for(int i=0; i<SIZE; i++)
-    for(int j=0; j<SIZE; j++)
+  for(int i=0; i<board.size(); i++)
+    for(int j=0; j<board[i].size(); j++)
       board[i][j] = rand()%2+48;
   
   printBoard(board);
