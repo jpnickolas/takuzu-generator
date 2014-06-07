@@ -4,7 +4,7 @@
 
 using namespace std;
 
-void printBoard(bool board[][SIZE]) {
+void printBoard(char board[][SIZE]) {
   for(int i=0; i<SIZE; i++) {
     for(int j=0; j<SIZE; j++)
       cout<<board[i][j]<<' ';
@@ -13,11 +13,11 @@ void printBoard(bool board[][SIZE]) {
 }
 
 int main(void) {
-  bool board[SIZE][SIZE];
+  char board[SIZE][SIZE];
 
   for(int i=0; i<SIZE; i++)
     for(int j=0; j<SIZE; j++)
-      board[i][j] = 0;
+      board[i][j] = '_';
 
   printBoard(board);
 }
