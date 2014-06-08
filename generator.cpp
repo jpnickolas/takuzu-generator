@@ -50,7 +50,37 @@ bool validBoard(vector<vector<char> > board) {
     one = 0;
     zero = 0;
   }
+ 
+  //checks the rows for any values of more than 2 in succession
+  bool consecutive = false;
+  for(int i=0; i<size; i++) {
+    for(int j=1; j<size; j++) {
+      if(board[i][j]==board[i][j-1] && board[i][j]!='/') {
+        if(consecutive)
+          return false;
+        else
+          consecutive = true;
+      }
+      else
+        consecutive = false;
+    }
+  }
   
+  //checks the columns for any values of more than 2 in succession
+  consecutive = false;
+  for(int i=0; i<size; i++) {
+    for(int j=1; j<size; j++) {
+      if(board[j][i]==board[j-1][i] && board[j][i]!='/') {
+        if(consecutive)
+          return false;
+        else
+          consecutive = true;
+      }
+      else
+        consecutive = false;
+    }
+  }
+
   //checks the rows for duplicates
   for(int i=0; i<size; i++) {
     for(int j=i+1; j<size; j++) {
