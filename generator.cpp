@@ -180,7 +180,45 @@ int solve_puzzle(vector<vector<char> > &board) {
   return 1;
 }
 
+vector<vector<char> > get_solution(vector<vector<char> > &board) {
+  if(!valid_board(board))
+    return vector<vector<char> >(0);
+  
+  for(int i=0; i<board.size(); i++) {
+    for(int j=0; j<board[i].size(); j++) {
+      if(board[i][j]==BLANK) {
+        board[i][j]=ZERO;
+        vector<vector<char> > solution = get_solution(board);
+        
+        if(solution.size() == 0) {
+          board[i][j]=ONE;
+          solution = get_solution(board);
+          
+          if(solution.size()==0)
+            board[i][j]=BLANK;
+        }
+        
+        return solution;
+      }
+    }
+  }
 
+  return board;
+}
+
+vector<vector<char> > ease_board(vector<vector<char> > board, int extra_spots) {
+  vector<vector<char> > solution = vector<vector<char> >(board);
+  solution = get_solution(solution);
+
+  for(int i=0; i<extra_spots; i++) {
+    int x,y;
+    get_random_blank(board, x, y);
+    
+    board[x][y] = solution[x][y];
+  }
+  
+  return board;
+}
 
 vector<vector<char> > generate_puzzle(vector<vector<char> > board) {
   vector<vector<char> > test_board = vector<vector<char> >(board);
@@ -188,7 +226,7 @@ vector<vector<char> > generate_puzzle(vector<vector<char> > board) {
   int solutions = solve_puzzle(test_board);
 
   if(solutions == 1) {
-    return board;
+    return ease_board(board, count_blanks(board)/8);
   }
   else if(solutions > 1) {
     
@@ -224,18 +262,7 @@ int main(void) {
 
   board = generate_puzzle(board);
 
-//  for(int i=0; i<board.size(); i++)
-//    for(int j=0; j<board[i].size(); j++)
-//      board[i][j] = rand()%3+47;
-  
   //prints out the board
   print_board(board);
 
-  //validates the board
-  if(valid_board(board)) {
-    cout<<"Valid"<<solve_puzzle(board)<<endl;
-  }
-  else {
-    cout<<"Invalid"<<endl;
-  }
 }
