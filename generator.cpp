@@ -3,7 +3,7 @@
 #include<stdlib.h>
 #include<time.h>
 
-#define SIZE 4
+#define DEFAULT_SIZE 8
 #define BLANK '/'
 #define ZERO '0'
 #define ONE '1'
@@ -292,8 +292,24 @@ vector<vector<char> > generate_puzzle(vector<vector<char> > board) {
   return vector<vector<char> >(0);
 }
 
-int main(void) {
+int main(int argc, char * args[]) {
   
+  int size = DEFAULT_SIZE;
+  
+  //checks if a command line argument was sent
+  if(argc > 1) {
+    //gets the size from the argument
+    size = atoi(args[1]);
+    
+    //makes sure the argument is valid.
+    if(size<2)
+      size = DEFAULT_SIZE;
+    
+    //makes sure the argument is even
+    if(size%2 == 1)
+      size--;
+  }
+
   //randomizes the timer
   srand(time(NULL));
 
@@ -303,7 +319,7 @@ int main(void) {
   //this normally doesn't need to loop, but it's still an edge case to test for
   do {
     //creates the board of the correct size
-    board.resize(SIZE, vector<char>(SIZE, '/'));
+    board.resize(size, vector<char>(size, '/'));
     board = generate_puzzle(board);
   } while(board.size()==0);
 
