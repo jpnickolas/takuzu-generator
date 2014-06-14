@@ -3,7 +3,7 @@
 #include<stdlib.h>
 #include<time.h>
 
-#define SIZE 4
+#define SIZE 8
 #define BLANK '/'
 #define ZERO '0'
 #define ONE '1'
@@ -127,6 +127,8 @@ int count_blanks(vector<vector<char> > board) {
       }
     }
   }
+
+  return blanks;
 }
 
 void get_random_blank(vector<vector<char> > board, int &x, int &y) {
@@ -149,6 +151,37 @@ void get_random_blank(vector<vector<char> > board, int &x, int &y) {
   }
 }
 
+int solve_puzzle(vector<vector<char> > &board) {
+  if(!valid_board(board))
+    return 0;
+  
+  for(int i=0; i<board.size(); i++) {
+    for(int j=0; j<board[i].size(); j++) {
+      if(board[i][j]==BLANK) {
+        
+        board[i][j]=ZERO;
+        int solutions = solve_puzzle(board);
+        
+        if(solutions>1) {
+          board[i][j]=BLANK;
+          return solutions;
+        }
+        else {
+          board[i][j]=ONE;
+          solutions += solve_puzzle(board);
+          
+          board[i][j]=BLANK;
+          return solutions;
+        }
+      }
+    }
+  }
+
+  return 1;
+}
+
+
+
 vector<vector<char> > generate_puzzle(vector<vector<char> > board) {
   vector<vector<char> > test_board = vector<vector<char> >(board);
 
@@ -158,20 +191,22 @@ vector<vector<char> > generate_puzzle(vector<vector<char> > board) {
     return board;
   }
   else if(solutions > 1) {
-    int x, y;
     
-    get_random_blank(board, x, y);
-    
-    board[x][y] = rand()%2+48;
-    
-    vector<vector<char> > generated_puzzle = generate_puzzle(board);
-    if(generated_puzzle.size() == 0) {
-      if(board[x][y]=='0')
-        board[x][y]='1';
-      else
-        board[x][y]='0';
+    for(int i=0; i<10; i++) {
       
-      return generate_puzzle(board);
+      int x, y;
+      
+      get_random_blank(board, x, y);
+      
+      board[x][y] = rand()%2+48;
+      
+      vector<vector<char> > generated_puzzle = generate_puzzle(board);
+      if(generated_puzzle.size() == 0) {
+        board[x][y]=BLANK;
+      }
+      else
+        return generated_puzzle;
+      
     }
   }
 
@@ -186,16 +221,19 @@ int main(void) {
 
   //randomly fills the board
   srand(time(NULL));
-  for(int i=0; i<board.size(); i++)
-    for(int j=0; j<board[i].size(); j++)
-      board[i][j] = rand()%3+47;
+
+  board = generate_puzzle(board);
+
+//  for(int i=0; i<board.size(); i++)
+//    for(int j=0; j<board[i].size(); j++)
+//      board[i][j] = rand()%3+47;
   
   //prints out the board
   print_board(board);
 
   //validates the board
   if(valid_board(board)) {
-    cout<<"Valid"<<endl;
+    cout<<"Valid"<<solve_puzzle(board)<<endl;
   }
   else {
     cout<<"Invalid"<<endl;
