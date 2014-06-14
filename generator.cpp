@@ -3,7 +3,7 @@
 #include<stdlib.h>
 #include<time.h>
 
-#define SIZE 8
+#define SIZE 4
 #define BLANK '/'
 #define ZERO '0'
 #define ONE '1'
@@ -117,6 +117,7 @@ bool valid_board(vector<vector<char> > board) {
   return true;
 }
 
+//counts the blank spaces in a board
 int count_blanks(vector<vector<char> > board) {
   int blanks = 0;
   
@@ -131,11 +132,17 @@ int count_blanks(vector<vector<char> > board) {
   return blanks;
 }
 
+/*
+  chooses a random blank space from the board, and sends back the (x, y) 
+  coordinates using the reference of the x and y sent initially
+*/
 void get_random_blank(vector<vector<char> > board, int &x, int &y) {
-  int blanks = count_blanks(board);
 
+  //counts the blanks and chooses a random one
+  int blanks = count_blanks(board);
   int blank = rand()%blanks;
 
+  //finds that random blank spot, and sends it back
   for(int i=0; i<board.size(); i++) {
     for(int j=0; j<board[i].size(); j++) {
       if(board[i][j]==BLANK) {
@@ -151,45 +158,64 @@ void get_random_blank(vector<vector<char> > board, int &x, int &y) {
   }
 }
 
-int solve_puzzle(vector<vector<char> > &board) {
+/*
+  Recursively counts the number of solutions of the board. 
+  This caps at 2 for the sake of efficiency, but can be altered easily to get
+  the total number of solutions. 
+*/
+int count_solutions(vector<vector<char> > &board) {
+  //checks if the board is even valid
   if(!valid_board(board))
     return 0;
   
+  //finds a blank spot
   for(int i=0; i<board.size(); i++) {
     for(int j=0; j<board[i].size(); j++) {
       if(board[i][j]==BLANK) {
         
+        //tests zero in that blank spot
         board[i][j]=ZERO;
-        int solutions = solve_puzzle(board);
+        int solutions = count_solutions(board);
         
+        //if there are too many solutions, don't even bother getting the rest
         if(solutions>1) {
           board[i][j]=BLANK;
           return solutions;
         }
         else {
+          //tests one in that blank spot
           board[i][j]=ONE;
-          solutions += solve_puzzle(board);
+          solutions += count_solutions(board);
           
+          //resets the board before returning the number of solutions
           board[i][j]=BLANK;
           return solutions;
         }
       }
     }
   }
-
+  
+  //if there are no more blank spots, then this must be a solution
   return 1;
 }
 
+//recursively finds the first solution to a puzzle, and returns it
 vector<vector<char> > get_solution(vector<vector<char> > &board) {
   if(!valid_board(board))
     return vector<vector<char> >(0);
   
+  //finds the first blank in the board
   for(int i=0; i<board.size(); i++) {
     for(int j=0; j<board[i].size(); j++) {
       if(board[i][j]==BLANK) {
+        
+        //tries filling the blank with a zero
         board[i][j]=ZERO;
+        
+        //gets the first solution with a zero
         vector<vector<char> > solution = get_solution(board);
         
+        //if the solution is empty, tries again with a one
         if(solution.size() == 0) {
           board[i][j]=ONE;
           solution = get_solution(board);
@@ -198,18 +224,23 @@ vector<vector<char> > get_solution(vector<vector<char> > &board) {
             board[i][j]=BLANK;
         }
         
+        //resets the board before returning the solution
+        board[i][j] = BLANK;
         return solution;
       }
     }
   }
 
-  return board;
+  return vector<vector<char> >(board);
 }
 
+//makes the game a bit easier by giving the user some free spaces
 vector<vector<char> > ease_board(vector<vector<char> > board, int extra_spots) {
-  vector<vector<char> > solution = vector<vector<char> >(board);
-  solution = get_solution(solution);
+  
+  //gets the solution to the puzzle
+  vector<vector<char> > solution = get_solution(board);
 
+  //gets random blank spots, and fills them in
   for(int i=0; i<extra_spots; i++) {
     int x,y;
     get_random_blank(board, x, y);
@@ -220,25 +251,34 @@ vector<vector<char> > ease_board(vector<vector<char> > board, int extra_spots) {
   return board;
 }
 
+/*
+  recursively generates the takuzu puzzle based on the size of the initial 
+  board sent. If the board is filled, it will attempt to create a puzzle from
+  it.
+*/
 vector<vector<char> > generate_puzzle(vector<vector<char> > board) {
-  vector<vector<char> > test_board = vector<vector<char> >(board);
 
-  int solutions = solve_puzzle(test_board);
+  //counts the possible solutions in the board
+  int solutions = count_solutions(board);
 
+  //if there is only one solution, return that board with a few spaces filled
   if(solutions == 1) {
     return ease_board(board, count_blanks(board)/8);
   }
   else if(solutions > 1) {
     
+    //will try up to 10 times to create a working puzzle 
     for(int i=0; i<10; i++) {
       
+      //gets a random blank spot, and fills it with a random zero or one
       int x, y;
-      
       get_random_blank(board, x, y);
-      
       board[x][y] = rand()%2+48;
       
+      //generates a new puzzle with that configuration
       vector<vector<char> > generated_puzzle = generate_puzzle(board);
+      
+      //if the new puzzle is successful, it is returned. Otherwise, reattempt
       if(generated_puzzle.size() == 0) {
         board[x][y]=BLANK;
       }
@@ -248,19 +288,24 @@ vector<vector<char> > generate_puzzle(vector<vector<char> > board) {
     }
   }
 
+  //will eventually give up, although this is highly unlikely.
   return vector<vector<char> >(0);
 }
 
 int main(void) {
-
-  //creates the board of the correct size
-  vector<vector<char> > board;
-  board.resize(SIZE, vector<char>(SIZE, '/'));
-
-  //randomly fills the board
+  
+  //randomizes the timer
   srand(time(NULL));
 
-  board = generate_puzzle(board);
+  vector<vector<char> > board;
+  
+  //keeps trying to generate puzzles until it creates a successful one.
+  //this normally doesn't need to loop, but it's still an edge case to test for
+  do {
+    //creates the board of the correct size
+    board.resize(SIZE, vector<char>(SIZE, '/'));
+    board = generate_puzzle(board);
+  } while(board.size()==0);
 
   //prints out the board
   print_board(board);
