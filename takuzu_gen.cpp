@@ -1,11 +1,66 @@
 #include<iostream>
 #include<math.h>
 #include<ctime>
+#include<stack>
+#include<list>
+#include<filesystem>
 
-#define SIZE 10
+#define SIZE 8
 #define SEED_SIZE 8
 
 using namespace std;
+
+struct Position {
+    int row;
+    int col;
+    bool val;
+    list<Position*>* used_positions = new list<Position*>();
+};
+
+bool has_error(bool** board, int row, int col, bool** used)
+{
+    int total_in_row = 0;
+    int total_in_col = 0;
+    int consecutive_row_vals = 0;
+    int consecutive_col_vals = 0;
+    for(int i = 0; i < SIZE; i++)
+    {
+        if((used[i][col]) && board[row][col] == board[i][col])
+        {
+            total_in_col++;
+            consecutive_col_vals++;
+        }
+        else
+        {
+            consecutive_col_vals = 0;
+        }
+        if(consecutive_col_vals > 2)
+        {
+            return true;
+        }
+        
+        if((used[row][i]) && board[row][col] == board[row][i])
+        {
+            total_in_row++;
+            consecutive_row_vals++;
+        }
+        else
+        {
+            consecutive_row_vals = 0;
+        }
+        if(consecutive_row_vals > 2)
+        {
+            return true;
+        }
+    }
+    
+    if((total_in_row > SIZE/2) || (total_in_col > SIZE/2))
+    {
+        return true;
+    }
+    
+    return false;
+}
 
 bool prune(bool** board, int row, int col, bool** used, bool* error)
 {
@@ -275,10 +330,83 @@ int get_possible_boards(bool ** board, int row, int col, bool ** used, int ** ze
     return total_ones + total_zeroes;
 }
 
-int main()
+void draw(bool** board, bool** used)
 {
-    srand(time(0));
 
+    // Draw board
+    for (int i = 0; i<SIZE; i++)
+    {
+        cout << "--";
+    }
+    cout << "-\n";
+    for (int i = 0; i<SIZE; i++)
+    {
+        cout << "|";
+        for (int j = 0; j<SIZE; j++)
+        {
+            char output = ' ';
+            if (used[i][j])
+            {
+                output = board[i][j] ? '1' : '0';
+            }
+            cout << output << " ";
+        }
+        cout << "\n";
+        for (int j = 0; j<SIZE; j++)
+        {
+            cout << "--";
+        }
+        cout << "-\n";
+    }
+
+    getchar();
+}
+
+bool contains_position(list<Position*>* positions, int row, int col, bool val)
+{
+    for (Position* curr : *positions)
+    {
+        if ((curr->row == row) && (curr->col == col) && (curr->val == val))
+        {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+void save_board(bool** board, bool** used, int total_boards)
+{
+    // create the file
+    FILE* file;
+    string file_name = "takuzu_puzzle";
+    file_name.append(to_string(total_boards));
+    fopen_s(&file, file_name.c_str(), "w");
+
+    // Write the dimensions to the file
+    char dimensions = (SIZE << 4) | (SIZE & 0b00001111);
+    fwrite(&dimensions, 8, 1, file);
+
+    bool buffer[SIZE*SIZE*2];
+
+    // write the board and used positions to the buffer
+    for (int i = 0; i < SIZE; i++)
+    {
+        for (int j = 0; j < SIZE; j++)
+        {
+            buffer[i*SIZE + j] = board[i][j];
+            buffer[i*SIZE + j + SIZE*SIZE] = used[i][j];
+        }
+    }
+
+    // write the buffer to the file
+    fwrite(&buffer, 1, SIZE*SIZE*2, file);
+
+    fclose(file);
+}
+
+void generate_board(int max_boards)
+{
     // a grid of trues and falses representing the 1's and 0's respectively on a takuzu board
     bool** board = new bool *[SIZE];
     
@@ -288,7 +416,10 @@ int main()
     // the total boards that exist with either a 1 or 0 in each respective position given an initial board
     int** zeroes = new int *[SIZE];
     int** ones = new int *[SIZE];
-    
+
+    stack<Position*>* order = new stack<Position*>();
+    int total_boards = 0;
+
     // reset the boards
     for(int i=0; i < SIZE; i++)
     {
@@ -310,10 +441,32 @@ int main()
     {
         int row = rand()%SIZE;
         int col = rand()%SIZE;
-        board[row][col] = rand()%2;
-        used[row][col] = true;
+        if(!used[row][col])
+        {
+            board[row][col] = rand()%2;
+            if(!has_error(board, row, col, used))
+            {
+                used[row][col] = true;
+
+                Position* curr = new Position();
+                curr->row = row;
+                curr->col = col;
+                curr->val = board[row][col];
+                order->push(curr);
+            }
+            else
+            {
+                i--;
+            }
+        }
+        else
+        {
+            i--;
+        }
     }
-    
+
+    draw(board, used);
+
     // iterate until the provided board produces only one valid solution
     while(true)
     {
@@ -364,13 +517,13 @@ int main()
         {
             for(int j=0; j < SIZE; j++)
             {
-                if((zeroes[i][j] != 0) && ((lowest_zero == 0) || (zeroes[i][j] < lowest_zero)))
+                if((!contains_position(order->top()->used_positions, i, j, false)) && (zeroes[i][j] != 0) && ((lowest_zero == 0) || (zeroes[i][j] < lowest_zero)))
                 {
                     lowest_zero = zeroes[i][j];
                     lowest_zero_row = i;
                     lowest_zero_col = j;
                 }
-                if((ones[i][j] != 0) && ((lowest_one == 0) || (ones[i][j] < lowest_one)))
+                if(!contains_position(order->top()->used_positions, i, j, true) && (ones[i][j] != 0) && ((lowest_one == 0) || (ones[i][j] < lowest_one)))
                 {
                     lowest_one = ones[i][j];
                     lowest_one_row = i;
@@ -389,46 +542,47 @@ int main()
         {
             board[lowest_zero_row][lowest_zero_col] = 0;
             used[lowest_zero_row][lowest_zero_col] = true;
+
+            Position* adder = new Position();
+            adder->row = lowest_zero_row;
+            adder->col = lowest_zero_col;
+            adder->val = false;
+            order->push(adder);
         }
         else
         {
             board[lowest_one_row][lowest_one_col] = 1;
             used[lowest_one_row][lowest_one_col] = true;
+
+            Position* adder = new Position();
+            adder->row = lowest_one_row;
+            adder->col = lowest_one_col;
+            adder->val = true;
+            order->push(adder);
         }
 
         if ((lowest_zero == 1) || (lowest_one == 1))
         {
-            break;
-        }
-    }
-    
-    // Draw board
-    for(int i=0; i<SIZE; i++)
-    {
-        cout<<"--";
-    }
-    cout<<"-\n";
-    for(int i =0; i<SIZE; i++)
-    {
-        cout<<"|";
-        for(int j=0; j<SIZE; j++)
-        {
-            char output = ' ';
-            if(used[i][j])
+            total_boards++;
+            draw(board, used);
+            save_board(board, used, total_boards);
+
+            if (total_boards > max_boards)
             {
-                output = board[i][j] ? '1' : '0';
+                break;
             }
-            cout<<output<<" ";
+
+            Position* curr = order->top();
+            order->pop();
+            order->top()->used_positions->push_back(curr);
+            used[curr->row][curr->col] = false;
         }
-        cout<<"\n";
-        for(int j=0; j<SIZE; j++)
-        {
-            cout<<"--";
-        }
-        cout<<"-\n";
     }
+}
 
-    getchar();
+int main()
+{
+    srand(time(0));
 
-    return 0;
+    generate_board(10);
 }
